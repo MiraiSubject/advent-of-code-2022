@@ -101,15 +101,9 @@ impl TreeGrid {
     fn is_visible_x(&self, x_coord: usize, y_coord: usize, tree_height: u32) -> bool {
         let left_of_tree = &self.grid[y_coord][..x_coord];
         let right_of_tree = &self.grid[y_coord][x_coord + 1..];
-        // println!("({}, {})", x_coord+1, y_coord+1);
-        // println!("{left_of_tree:#?}");
-        // println!("{right_of_tree:#?}");
 
         let tallest_on_left = left_of_tree.iter().max().unwrap();
         let tallest_on_right = right_of_tree.iter().max().unwrap();
-        //println!("{}", tree_height);
-        // println!("{} > {} || {} > {}", tree_height, *tallest_on_left, tree_height, *tallest_on_right);
-        // println!("-----");
 
         tree_height > *tallest_on_left || tree_height > *tallest_on_right
     }
@@ -119,13 +113,10 @@ impl TreeGrid {
         let above_tree = &self.grid[..y_coord];
         let below_tree = &self.grid[y_coord..];
 
-        //println!("{below_tree:#?}");
-
         let mut above_tree_vec = Vec::new();
         for t in above_tree {
             above_tree_vec.push(t[x_coord]);
         }
-        // println!("For {} at ({},{}): {:#?}", tree_height, x_coord+1, y_coord+1, above_tree_vec);
 
         let mut below_tree_vec = Vec::new();
         for t in below_tree {
@@ -137,8 +128,6 @@ impl TreeGrid {
         let tallest_above = above_tree_vec.iter().max().unwrap();
         let tallest_below = below_tree_vec.iter().max().unwrap();
 
-        // println!("{} > {} || {} > {}", tree_height, *tallest_above, tree_height, *tallest_below);
-        // println!("-----");
         tree_height > *tallest_above || tree_height > *tallest_below
     }
 
@@ -155,10 +144,7 @@ impl TreeGrid {
                     y_coords.try_into().unwrap(),
                     *height,
                 ) {
-                    //println!("Visible: {height}");
                     output += 1;
-                } else {
-                    //println!("Not visible: {height}")
                 }
             }
         }
@@ -202,9 +188,6 @@ impl TreeGrid {
         let left_of_tree = &self.grid[y_coord][..x_coord];
         let mutable_left = &mut left_of_tree.to_owned().clone();
         let right_of_tree = &self.grid[y_coord][x_coord + 1..];
-        
-        let mut printleft = mutable_left.clone();
-        printleft.reverse();
 
         mutable_left.reverse();
 
@@ -217,9 +200,6 @@ impl TreeGrid {
                 break;
             }
         }
-
-        // println!("{}: {:#?}", tree, printleft);
-        // println!("{tree}: {right_of_tree:#?}");
 
         for other_tree in right_of_tree {
             if tree > *other_tree {
@@ -254,8 +234,6 @@ impl TreeGrid {
 
         below_tree_vec.remove(0);
 
-        println!("{:#?}", below_tree_vec);
-
         for other_tree in below_tree_vec {
             if tree > other_tree {
                 below_visible += 1;
@@ -265,16 +243,6 @@ impl TreeGrid {
                 break;
             }
         }
-
-        // println!(
-        //     "({}, {}): {} . {} . {} . {}",
-        //     x_coord,
-        //     y_coord,
-        //     above_visible,
-        //     right_visible,
-        //     below_visible,
-        //     left_visible
-        // );
 
         above_visible * below_visible * left_visible * right_visible
     }
@@ -298,5 +266,4 @@ fn main() {
     let highscore = grid.calc_highest_scenic_score();
     println!("Part 1: {number}");
     println!("Part 2: {highscore}");
-    // println!("{:#?}", grid.grid);
 }
