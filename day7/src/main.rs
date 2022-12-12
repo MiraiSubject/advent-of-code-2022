@@ -79,28 +79,20 @@ fn main() {
         }
     }
 
-    finalOutput = reccalc(&root);
+    finalOutput = calcsize(&root);
 
-    println!("{finalOutput}");
+    // println!("{finalOutput}");
+
+    let freeSpace = 70000000 - finalOutput;
+    println!("Storage: Free space is: {freeSpace}");
+    let requiredSpace = 30000000 - freeSpace;
+    println!("Storage: required storage for update is {requiredSpace}");
+
+    let thing = smallestDirToFreeSpace(requiredSpace, &root);
+
+    println!("Size of directory to be deleted for update = {thing}")
 }
 
-fn getCurrentDirectory(dirs: Vec<&str>) -> String {
-    match dirs.last() {
-        None => String::from("/"),
-        Some(result) => String::from(result.clone()),
-    }
-}
-
-fn fmtVec(dirs: Vec<&str>) -> String {
-    let mut output = String::from("/").to_owned();
-
-    for dir in dirs {
-        output.push_str(&(dir.to_owned() + &"/".to_owned()));
-    }
-    output
-}
-
-// a
 fn subdir<'a>(path: Vec<&'a str>, filesystem: &'a mut Node) -> &'a mut Node {
     let mut v = path.clone();
 
@@ -131,6 +123,7 @@ fn subdir<'a>(path: Vec<&'a str>, filesystem: &'a mut Node) -> &'a mut Node {
     }
 }
 
+// Calculates the size of a directory and any directories contaìned within that directory.
 fn calcsize(dir: &Node) -> u64 {
     let mut output: u64 = 0;
     if let Node::Directory { name: _, contents } = dir {
@@ -141,7 +134,7 @@ fn calcsize(dir: &Node) -> u64 {
             }
             if let Node::Directory { name, contents: _ } = list {
                 output += calcsize(list);
-                println!("{name}: {output}");
+                // println!("{name}: {output}");
             }
         }
         output
@@ -150,13 +143,14 @@ fn calcsize(dir: &Node) -> u64 {
     }
 }
 
-fn reccalc(dir: &Node) -> u64 {
+// Get directory size recursively for with a total size of less than 100k
+fn dirsizelessrecursively100k(dir: &Node) -> u64 {
     let mut output = 0;
     if let Node::Directory { name, contents } = dir {
         for listing in contents {
             if let Node::Directory { name, contents } = &listing {
                 println!("{name}");
-                output += reccalc(&listing);
+                output += dirsizelessrecursively100k(&listing);
             }
             let num = calcsize(&listing);
             if num <= 100000 {
@@ -167,11 +161,51 @@ fn reccalc(dir: &Node) -> u64 {
     output
 }
 
+// TODO: deal with the recursive bs somehow so I can use this single vector to collect the values
+
+fn smallestDirToFreeSpace(reqSpace: u64, dir: &Node) -> u64 {
+    let mut dirList: Vec<u64> = vec![];
+
+    fn findDirToFreeSpace(reqSpace: u64, dir: &Node, dirList: &mut Vec<u64>) -> u64 {
+        let mut output = 0;
+
+        if let Node::Directory { name, contents } = dir {
+            for listing in contents {
+                if let Node::Directory { name, contents } = &listing {
+                    output += findDirToFreeSpace(reqSpace, &listing, dirList);
+                    println!("{name} -> {output}");
+                }
+                if let Node::File { size, name } = dir {}
+                let num = calcsize(&listing);
+                if num >= reqSpace {
+                    output += num;
+                    dirList.push(output);
+                    println!("{dirList:#?}");
+                }
+            }
+        }
+        output
+    }
+
+    findDirToFreeSpace(reqSpace, dir, &mut dirList);
+
+    dirList.dedup();
+    dirList.retain(|&x| x != 0);
+
+    println!("{dirList:#?}");
+
+    let minValue = dirList.iter().min();
+    match minValue {
+        Some(min) => *min,
+        None => 0,
+    }
+}
+
 #[test]
 fn test() {
     let path = vec!["a", "b", "j"];
 
-    let filesystem = Node::Directory {
+    let mut filesystem = Node::Directory {
         name: "/".to_owned(),
         contents: vec![Node::Directory {
             name: "a".to_string(),
@@ -203,5 +237,5 @@ fn test() {
         }],
     };
 
-    println!("{:#?}", subdir(path, &filesystem));
+    println!("{:#?}", subdir(path, &mut filesystem));
 }
