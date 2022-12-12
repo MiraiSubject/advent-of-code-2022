@@ -90,7 +90,7 @@ impl TreeGrid {
         }
 
         let is_visible = self.is_visible_x(x_coord, y_coord, height)
-        || self.is_visible_y(x_coord, y_coord, height);
+            || self.is_visible_y(x_coord, y_coord, height);
 
         self.set_visible(is_visible, x_coord, y_coord);
 
@@ -100,7 +100,7 @@ impl TreeGrid {
     // Check the X-axis visibility
     fn is_visible_x(&self, x_coord: usize, y_coord: usize, tree_height: u32) -> bool {
         let left_of_tree = &self.grid[y_coord][..x_coord];
-        let right_of_tree = &self.grid[y_coord][x_coord+1..];
+        let right_of_tree = &self.grid[y_coord][x_coord + 1..];
         // println!("({}, {})", x_coord+1, y_coord+1);
         // println!("{left_of_tree:#?}");
         // println!("{right_of_tree:#?}");
@@ -120,7 +120,7 @@ impl TreeGrid {
         let below_tree = &self.grid[y_coord..];
 
         //println!("{below_tree:#?}");
-        
+
         let mut above_tree_vec = Vec::new();
         for t in above_tree {
             above_tree_vec.push(t[x_coord]);
@@ -164,6 +164,120 @@ impl TreeGrid {
         }
         output
     }
+
+    fn calc_highest_scenic_score(&mut self) -> u32 {
+        let binding = self.grid.clone();
+        let iter = binding.iter();
+
+        let mut scores = Vec::new();
+
+        for (y_coords, vec) in iter.enumerate() {
+            for (x_coords, _) in vec.iter().enumerate() {
+                let num = self.calc_scenic_score_for(
+                    x_coords.try_into().unwrap(),
+                    y_coords.try_into().unwrap(),
+                );
+                scores.push(num);
+            }
+        }
+        *scores.iter().max().unwrap()
+    }
+
+    fn calc_scenic_score_for(&self, x_coord: usize, y_coord: usize) -> u32 {
+        let tree = self.grid[y_coord][x_coord];
+
+        if x_coord == 0
+            || y_coord == 0
+            || self.grid.len() - 1 == y_coord
+            || self.grid[0].len() - 1 == x_coord
+        {
+            return 0;
+        }
+
+        let mut left_visible = 0;
+        let mut right_visible = 0;
+        let mut above_visible = 0;
+        let mut below_visible = 0;
+
+        let left_of_tree = &self.grid[y_coord][..x_coord];
+        let mutable_left = &mut left_of_tree.to_owned().clone();
+        let right_of_tree = &self.grid[y_coord][x_coord + 1..];
+        
+        let mut printleft = mutable_left.clone();
+        printleft.reverse();
+
+        mutable_left.reverse();
+
+        for other_tree in mutable_left {
+            if tree > *other_tree {
+                left_visible += 1;
+            }
+            if tree <= *other_tree {
+                left_visible += 1;
+                break;
+            }
+        }
+
+        // println!("{}: {:#?}", tree, printleft);
+        // println!("{tree}: {right_of_tree:#?}");
+
+        for other_tree in right_of_tree {
+            if tree > *other_tree {
+                right_visible += 1;
+            }
+            if tree <= *other_tree {
+                right_visible += 1;
+                break;
+            }
+        }
+
+        let mut above_tree_vec = Vec::new();
+        for t in &self.grid[..y_coord] {
+            above_tree_vec.push(t[x_coord]);
+        }
+        above_tree_vec.reverse();
+
+        for other_tree in above_tree_vec {
+            if tree > other_tree {
+                above_visible += 1;
+            }
+            if tree <= other_tree {
+                above_visible += 1;
+                break;
+            }
+        }
+
+        let mut below_tree_vec = Vec::new();
+        for t in &self.grid[y_coord..] {
+            below_tree_vec.push(t[x_coord]);
+        }
+
+        below_tree_vec.remove(0);
+
+        println!("{:#?}", below_tree_vec);
+
+        for other_tree in below_tree_vec {
+            if tree > other_tree {
+                below_visible += 1;
+            }
+            if tree <= other_tree {
+                below_visible += 1;
+                break;
+            }
+        }
+
+        // println!(
+        //     "({}, {}): {} . {} . {} . {}",
+        //     x_coord,
+        //     y_coord,
+        //     above_visible,
+        //     right_visible,
+        //     below_visible,
+        //     left_visible
+        // );
+
+        above_visible * below_visible * left_visible * right_visible
+    }
 }
 
 fn main() {
@@ -180,6 +294,9 @@ fn main() {
     grid.generate_v_grid();
     let number = grid.check_all_visible();
     grid.print_v_grid();
-    println!("{number}");
+
+    let highscore = grid.calc_highest_scenic_score();
+    println!("Part 1: {number}");
+    println!("Part 2: {highscore}");
     // println!("{:#?}", grid.grid);
 }
