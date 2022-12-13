@@ -1,3 +1,5 @@
+#[allow(dead_code)]
+
 use std::fs;
 
 #[derive(Debug)]
@@ -17,23 +19,42 @@ impl CPU {
     fn exec(&mut self, program: Program) {
         match program {
             Program::Noop => {
-                self.cycle += 1;
-                self.display();
+                self.cycle();
             }
             Program::Addx(num) => {
                 for _ in 0..2 {
-                    self.cycle += 1;
-                    self.display();
+                    self.cycle();
                 }
                 self.x += num;
             }
         }
     }
 
-    fn display(&mut self) {
-        println!("Cycle: {0}", self.cycle);
-        println!("Register X: {0}", self.x);
-        self.part_a_signal_strength();
+    fn cycle(&mut self) {
+        self.cycle +=1;
+        self.generate_display();
+    }
+
+    // fn cpu_debug_display(&mut self) {
+    //     println!("Cycle: {0}", self.cycle);
+    //     println!("Register X: {0}", self.x);
+    //     // self.part_a_signal_strength();
+    // }
+
+    fn generate_display(&mut self) {
+        // 1 = 0; 40 = 39; 
+        // should do -1 mod 40
+        // let row = self.cycle -1 / 40;
+        let col = (self.cycle -1) % 40; // <-- current sprite position
+
+        if self.x.abs_diff(col.try_into().unwrap()) <= 1 {
+            print!("#");
+        } else {
+            print!(".");
+        }
+        if col == 39 {
+            println!();
+        }
     }
 
     fn part_a_signal_strength(&mut self) {
@@ -87,5 +108,5 @@ fn main() {
         };
     }
 
-    cpu.display_total_strength()
+    cpu.display_total_strength();
 }
