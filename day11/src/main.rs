@@ -21,7 +21,7 @@ struct Monkey {
     items: VecDeque<u128>,
     activity: u128,
     operation: Operation,
-    test: Test,
+    test: Test
 }
 
 impl Monkey {
@@ -55,6 +55,7 @@ impl Monkey {
                 ),
             },
         })
+
     }
 
     fn inspect(&self, worry_level: u128) -> u128 {
@@ -65,8 +66,8 @@ impl Monkey {
         }
     }
 
-    fn bored(worry_level: u128) -> u128 {
-        worry_level / 3
+    fn bored(divisor: u128, worry_level: u128) -> u128 {
+        worry_level % divisor// / 3
     }
 
     fn test_result(&self, worry_level: u128) -> usize {
@@ -79,9 +80,8 @@ impl Monkey {
 
     fn throw(&mut self) -> u128 {
         let item = self.items.pop_front().unwrap();
-        let post_operation = self.inspect(item);
         self.activity +=1;
-        Self::bored(post_operation)
+        self.inspect(item)
     }
 }
 
@@ -111,12 +111,15 @@ fn main() {
         .collect();
 
     let length = monkeys.len();
+
+    let lcm = monkeys.iter().map(|x| x.test.divisor).reduce(|x,y| x * y).unwrap();
     
-    for _ in 0..20 {
+    for _ in 0..10000 {
         for i in 0..length {
             let length = monkeys[i].items.len();
             for _ in 0..length {
                 let new_worry = monkeys[i].throw();
+                let new_worry = Monkey::bored(lcm, new_worry);
                 let dst = monkeys.get(i).unwrap().test_result(new_worry);
                 monkeys[dst].items.push_back(new_worry);
             }
@@ -125,9 +128,9 @@ fn main() {
 
     monkeys.iter().enumerate().for_each(|(i, monkey)| {
         print!("Monkey {i}: ");
-        for worry in monkey.items.iter() {
-            print!("{worry}, ");
-        }
+        // for worry in monkey.items.iter() {
+        //     print!("{worry}, ");
+        // }
 
         print!("Monkey {i} inspected items {} times.", monkey.activity);
 
